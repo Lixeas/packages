@@ -1,0 +1,96 @@
+name: publish
+
+on:
+  push:
+    branches: [incoming]
+
+jobs:
+  publish-apt-yum:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tooling
+        run: sudo apt-get update && sudo apt-get install -y aptly createrepo-c gnupg rsync openssh-client
+      - name: Restore previously published packages
+        run: |
+          mkdir -p ~/.ssh incoming/apt incoming/yum
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          # pull down whatever .deb/.rpm are already live, so this run prunes/rebuilds
+          # from the full retained history + the new release, not from the new release
+          # alone (incoming/ and out/ never persist between CI runs otherwise)
+          mkdir -p /tmp/existing-apt
+          rsync -az -e "ssh -i ~/.ssh/id_ed25519" --include='*/' --include='*.deb' --exclude='*' \
+            "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/apt/" /tmp/existing-apt/ 2>/dev/null || true
+          find /tmp/existing-apt -name '*.deb' -exec cp -n {} incoming/apt/ \; 2>/dev/null || true
+          rsync -az --ignore-existing -e "ssh -i ~/.ssh/id_ed25519" --include='*.rpm' --exclude='repodata/**' --exclude='*' \
+            "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/yum/" incoming/yum/ 2>/dev/null || true
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.PACKAGES_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.PACKAGES_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PACKAGES_DEPLOY_USER }}
+      - name: Import GPG key
+        run: echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.PACKAGES_GPG_PRIVATE_KEY }}
+      - name: Publish apt
+        run: ./scripts/publish-apt.sh
+        env:
+          GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
+      - name: Publish yum
+        run: ./scripts/publish-yum.sh
+        env:
+          GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
+      - name: Deploy
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" .aptly/public/ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/apt/"
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" out/yum/ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/yum/"
+          rsync -avz -e "ssh -i ~/.ssh/id_ed25519" gpg/hyperotter-packages.asc "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/gpg/"
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.PACKAGES_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.PACKAGES_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PACKAGES_DEPLOY_USER }}
+
+  publish-pacman:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install tooling
+        run: pacman -Sy --noconfirm git pacman-contrib gnupg openssh rsync
+      - uses: actions/checkout@v4
+      - name: Restore previously published packages
+        run: |
+          mkdir -p ~/.ssh incoming/pacman
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          rsync -az --ignore-existing -e "ssh -i ~/.ssh/id_ed25519" --include='*.pkg.tar.zst' --exclude='*' \
+            "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/pacman/" incoming/pacman/ 2>/dev/null || true
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.PACKAGES_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.PACKAGES_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PACKAGES_DEPLOY_USER }}
+      - name: Import GPG key
+        run: echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.PACKAGES_GPG_PRIVATE_KEY }}
+      - name: Publish pacman
+        run: ./scripts/publish-pacman.sh
+        env:
+          GPG_PASSPHRASE: ${{ secrets.PACKAGES_GPG_PASSPHRASE }}
+      - name: Deploy
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519" out/pacman/ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/packages/pacman/"
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.PACKAGES_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.PACKAGES_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PACKAGES_DEPLOY_USER }}
