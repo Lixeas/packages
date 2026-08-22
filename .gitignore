@@ -4,3 +4,9 @@ out/
 # never let a private key land here by accident
 *.priv
 *private*.asc
+
+# safety net: incoming/ only ever gets real content on the orphan incoming
+# branch (force-added there with git add -f, per Task 9). Never on main.
+incoming/*/*.deb
+incoming/*/*.rpm
+incoming/*/*.pkg.tar.zst
