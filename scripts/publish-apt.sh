@@ -13,7 +13,7 @@ GPG_KEY_UID="HyperOtter Packages"
 # ~/.aptly, hors du depot.
 ALY=(aptly -config=aptly/aptly.conf)
 
-"${ALY[@]}" repo create -distribution="$DIST" -component=main "$REPO" 2>/dev/null || true
+"${ALY[@]}" repo create -distribution="$DIST" -component=main "$REPO" || true
 
 shopt -s nullglob
 for deb in incoming/apt/*.deb; do
@@ -21,7 +21,7 @@ for deb in incoming/apt/*.deb; do
 done
 shopt -u nullglob
 
-"${ALY[@]}" publish drop "$DIST" 2>/dev/null || true
+"${ALY[@]}" publish drop "$DIST" || true
 # Pas d'argument de prefixe ici : "aptly publish repo <name> [prefix]" traite
 # tout troisieme argument comme un PREFIXE de publication (sous-repertoire),
 # pas comme la distribution (deja fixee par `repo create -distribution=`) --
