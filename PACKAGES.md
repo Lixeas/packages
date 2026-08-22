@@ -18,6 +18,25 @@ UID: `HyperOtter Packages`
 Fingerprint: `6F31 D31E 2795 FA23 3B8A  E9AD 547C 57AD FBF8 6A3E`
 Cle publique servie a `https://packages.<TON_DOMAINE>/gpg/hyperotter-packages.asc`
 
+Copie de reference (source de verite) de la cle privee : secret GitHub
+`PACKAGES_GPG_PRIVATE_KEY` sur ce repo. Le trousseau local (WSL2/poste dev)
+est jetable — seule la copie en secret GitHub fait foi.
+
+Certificat de revocation : non genere. La passphrase generee a la creation
+de la cle n'a jamais ete affichee ni conservee nulle part (par conception),
+donc `gpg --gen-revoke` ne peut plus etre execute avec le trousseau local.
+Un job CI jetable importable les secrets pour le generer a ete envisage puis
+abandonne (le classifieur de securite l'a bloque, a juste titre — importer
+la cle privee dans un workflow pour en exporter un artefact ressemble
+structurellement a une exfiltration). Si la cle est un jour compromise, il
+faudra re-generer une nouvelle paire et republier la cle publique + le
+fingerprint partout (repo, clients deja configures) sans revocation propre
+de l'ancienne.
+
+Expiration : 2028-08-21. Avant cette date, soit prolonger via
+`gpg --quick-set-expire "HyperOtter Packages" <new-date>`, soit generer une
+nouvelle cle et mettre a jour ce document + les clients deja configures.
+
 ## Retention
 
 5 dernieres versions conservees par format, triees par `sort -V`
