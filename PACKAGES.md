@@ -41,3 +41,13 @@ nouvelle cle et mettre a jour ce document + les clients deja configures.
 
 5 dernieres versions conservees par format, triees par `sort -V`
 (`scripts/prune-versions.sh`).
+
+**Pas encore effectif** : `incoming/` est ecrase a chaque force-push (branche
+orphan) et `.aptly/`/`out/` ne persistent jamais entre deux runs CI (repertoires
+gitignores, reconstruits a neuf a chaque publish). Tant que la CI (Task 9) ne
+telecharge pas l'arbre deja publie avant de reconstruire, `prune-versions.sh`
+n'a jamais plus d'une version a elaguer — la retention documentee ici n'est pas
+encore vraie en pratique. Voir le plan
+`docs/superpowers/plans/2026-08-22-packages-repo-infra.md` (Task 9) pour le
+correctif prevu : restaurer l'arbre publie existant avant reconstruction,
+fusionner avec la nouvelle version, elaguer, puis republier.
