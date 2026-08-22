@@ -13,6 +13,8 @@ GPG_KEY_UID="HyperOtter Packages"
 # ~/.aptly, hors du depot.
 ALY=(aptly -config=aptly/aptly.conf)
 
+./scripts/prune-versions.sh incoming/apt 'hyperotter_.*\.deb$' 5
+
 "${ALY[@]}" repo create -distribution="$DIST" -component=main "$REPO" || true
 
 shopt -s nullglob

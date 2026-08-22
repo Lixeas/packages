@@ -7,6 +7,7 @@ GPG_KEY_UID="HyperOtter Packages"
 : "${GPG_PASSPHRASE:?GPG_PASSPHRASE must be set}"
 
 mkdir -p "$OUT"
+./scripts/prune-versions.sh incoming/yum 'hyperotter-.*\.rpm$' 5
 shopt -s nullglob
 for rpm in incoming/yum/*.rpm; do
   cp "$rpm" "$OUT/"

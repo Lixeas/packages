@@ -8,6 +8,7 @@ GPG_KEY_UID="HyperOtter Packages"
 : "${GPG_PASSPHRASE:?GPG_PASSPHRASE must be set}"
 
 mkdir -p "$OUT"
+./scripts/prune-versions.sh incoming/pacman 'hyperotter-.*\.pkg\.tar\.zst$' 5
 shopt -s nullglob
 for pkg in incoming/pacman/*.pkg.tar.zst; do
   cp "$pkg" "$OUT/"
