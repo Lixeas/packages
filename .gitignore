@@ -1,0 +1,6 @@
+# generated repo trees, rebuilt by CI every publish
+.aptly/
+out/
+# never let a private key land here by accident
+*.priv
+*private*.asc
