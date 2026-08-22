@@ -15,7 +15,7 @@ mergee dans `main`). `main` ne contient jamais de binaire.
 ## Cle de signature GPG
 
 UID: `HyperOtter Packages`
-Fingerprint: (a completer apres Task 3, Step 3)
+Fingerprint: `6F31 D31E 2795 FA23 3B8A  E9AD 547C 57AD FBF8 6A3E`
 Cle publique servie a `https://packages.<TON_DOMAINE>/gpg/hyperotter-packages.asc`
 
 ## Retention
