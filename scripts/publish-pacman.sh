@@ -38,9 +38,15 @@ repo-add --sign --key "$GPG_KEY_UID" "$DB" ./*.pkg.tar.zst
 
 # Cf. commentaire ci-dessus : repo-add sort en 0 meme quand la signature
 # echoue, il ne reste alors qu'un WARNING dans les logs. On verifie donc
-# explicitement la presence du .sig plutot que de faire confiance au code
-# de retour.
-if [[ ! -f "$DB.sig" ]]; then
-  echo "error: $DB.sig was not created -- repo-add signing failed" >&2
-  exit 1
-fi
+# explicitement la presence des .sig plutot que de faire confiance au code
+# de retour -- des deux : repo-add signe aussi une base auxiliaire
+# "<nom>.files.tar.zst" (liste des fichiers par paquet), a cote de la base
+# principale "$DB", avec sa propre signature. Verifie lors des tests : les
+# deux se signent ensemble a chaque fois, mais rien ne le garantit -- une
+# des deux pourrait echouer seule.
+for sig in "$DB.sig" "${DB%.db.tar.zst}.files.tar.zst.sig"; do
+  if [[ ! -f "$sig" ]]; then
+    echo "error: $sig was not created -- repo-add signing failed" >&2
+    exit 1
+  fi
+done
