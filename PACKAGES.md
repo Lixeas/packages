@@ -6,9 +6,15 @@ mergee dans `main`). `main` ne contient jamais de binaire.
 
 ## Convention de nommage attendue
 
-- `incoming/apt/hyperotter_<version>_amd64.deb`
+- `incoming/apt/hyperotter_<version>-1_amd64.deb`
 - `incoming/yum/hyperotter-<version>-1.x86_64.rpm`
 - `incoming/pacman/hyperotter-<version>-1-x86_64.pkg.tar.zst`
+
+Le suffixe `-1` est la révision de paquetage (Debian/RPM/pacman en ont tous une),
+pas une deuxième composante de version — c'est aussi ce que produit fpm par
+défaut (voir le chantier de packaging natif). Les 3 scripts de
+`scripts/prune-versions.sh` (motifs `hyperotter_.*\.deb$` etc.) matchent déjà
+ce format sans changement.
 
 `<version>` = version de `package.json`, sans prefixe `v` (ex: `0.2.0`).
 
